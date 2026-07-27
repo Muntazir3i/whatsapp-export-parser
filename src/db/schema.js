@@ -1,9 +1,11 @@
-import db from "./database";
+import db from "./database.js";
 
 export function createSchema() {
+    console.log("Checking database schema...");
+
     db.exec(
         `
-        CREATE TABLE IF NOT EXISTS chat(
+        CREATE TABLE IF NOT EXISTS chats(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         file_name TEXT,
@@ -16,9 +18,11 @@ export function createSchema() {
         sender TEXT NOT NULL,
         message TEXT NOT NULL,
         timestamp TEXT NOT NULL,
-        FOREIGN KEY (chat_id) REFERENCE chats (id)
+        FOREIGN KEY (chat_id) REFERENCES chats (id)
         );
 
         `
     );
+
+    console.log("Database schema ready.");
 }
