@@ -1,7 +1,8 @@
 import { createReadStream } from 'fs';
 import readline from 'readline/promises'; // Import as lowercase 'readline'
 import { text } from 'stream/consumers';
-import { msgParser } from './messageParser.js';
+import { msgParser, flush } from './messageParser.js';
+
 
 const fileStream = createReadStream('/home/mdot/projectFolder/whatsapp-export-parser/sample.txt', { encoding: 'utf8' });
 
@@ -17,6 +18,12 @@ for await (const line of rl) {
     continue;
   }
   msgParser(line);
+  
 }
+let lastmsg = flush();
+console.log(lastmsg);
+
+
+
 
 

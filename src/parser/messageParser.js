@@ -27,4 +27,11 @@ export function msgParser(text) {
 
     }
 
+    
 }
+
+export function flush(){
+    return buildingMsg;
+}
+
+
