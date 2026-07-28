@@ -26,3 +26,21 @@ export function createSchema() {
 
     console.log("Database schema ready.");
 }
+
+
+export function addToChat() {
+    const insertChat = db.prepare(`
+    INSERT INTO chats (name, file_name)
+    VALUES (@name, @file_name)
+    RETURNING *
+`);
+
+const newRow = insertChat.get({
+        name: "MOhammad",
+        file_name: "Mohammad.txt"
+    });
+
+    console.log("Database Insertion Result:", newRow);
+
+
+}
