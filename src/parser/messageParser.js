@@ -50,7 +50,7 @@ export function msgParser(text) {
         if (buildingMsg !== "") {
             let msgObj = buildMessageObject(buildingMsg);
             console.log(msgObj);
-            
+
         }
 
         // Start the new message
@@ -67,7 +67,8 @@ export function msgParser(text) {
 }
 
 export function flush() {
-    return buildingMsg;
+    let msgObj = buildMessageObject(buildingMsg);
+    return msgObj
 }
 
 
