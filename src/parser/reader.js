@@ -19,6 +19,8 @@ for await (const line of rl) {
   }
   msgParser(line);
   
+  
+  
 }
 let lastmsg = flush();
 console.log(lastmsg);
