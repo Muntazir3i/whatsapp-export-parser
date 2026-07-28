@@ -3,7 +3,7 @@ import { log } from "console";
 let buildingMsg = ""
 
 function checkDate(txt) {
-    let dateString = txt.slice(0, 10);
+    let dateString = txt.slice(0, 8);
     let [day, month, year] = dateString.split("/");
     let dateObj = new Date(year, month - 1, day);
     return !Number.isNaN(dateObj.getDate())
