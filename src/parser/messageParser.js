@@ -1,6 +1,4 @@
-import { log } from "console";
 
-let buildingMsg = ""
 
 function checkDate(txt) {
     let dateString = txt.slice(0, 8);
@@ -9,9 +7,7 @@ function checkDate(txt) {
     return !Number.isNaN(dateObj.getDate())
 }
 
-
-
-function buildMessageObject(text) {
+export function buildMessageObject(text) {
 
     // 1. Separate the timestamp from the sender and message
     const [timestampStr, rest] = text.split(" - ");
@@ -40,35 +36,23 @@ function buildMessageObject(text) {
 ;
 
 
-
-export function msgParser(text) {
-    let validDate = checkDate(text)
+export function msgParser(text, state) {
+    let validDate = checkDate(text);
+    let completedMsg = null;
     if (validDate) {
-
-        // If we're already building a message,
-        // it's now complete.
-        if (buildingMsg !== "") {
-            let msgObj = buildMessageObject(buildingMsg);
-            console.log(msgObj);
-
+        
+        if (state.buildingMsg !== "") {
+            completedMsg = buildMessageObject(state.buildingMsg);
         }
-
-        // Start the new message
-        buildingMsg = text;
-
+        
+        state.buildingMsg = text;
     } else {
-
-        // Continuation line
-        buildingMsg += `\\n${text}`;
-
+        
+        state.buildingMsg += `\\n${text}`;
     }
 
-
+    return completedMsg;
 }
 
-export function flush() {
-    let msgObj = buildMessageObject(buildingMsg);
-    return msgObj
-}
 
 
