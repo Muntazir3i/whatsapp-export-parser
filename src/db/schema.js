@@ -38,47 +38,47 @@ export function createSchema() {
 /**
  * Inserts a new chat record into the `chats` table.
  * 
- * @param {Object} chatObj - Object containing chat metadata.
- * @param {string} chatObj.name - The extracted contact/chat name.
- * @param {string} chatObj.file_name - The file name of the exported chat file.
+ * @param {Object} chatData - Object containing chat metadata.
+ * @param {string} chatData.name - The extracted contact/chat name.
+ * @param {string} chatData.file_name - The file name of the exported chat file.
  * @returns {Object} The inserted chat database row object including generated `id`.
  */
-export function addToChat(chatObj) {
-    const insertChat = db.prepare(`
+export function insertChatMetadata(chatData) {
+    const insertChatStmt = db.prepare(`
         INSERT INTO chats (name, file_name)
         VALUES (@name, @file_name)
         RETURNING *
     `);
 
-    const newRow = insertChat.get({
-        name: chatObj.name,
-        file_name: chatObj.file_name
+    const insertedRow = insertChatStmt.get({
+        name: chatData.name,
+        file_name: chatData.file_name
     });
 
-    console.log("Database Insertion Result:", newRow);
-    return newRow;
+    console.log("Database Insertion Result:", insertedRow);
+    return insertedRow;
 }
 
 /**
  * Inserts a single message record into the `messages` table.
  * 
- * @param {Object} msgObj - Object containing message data.
- * @param {number} msgObj.chat_id - Foreign key reference to the associated chat.
- * @param {string} msgObj.sender - Name or phone number of the message sender.
- * @param {string} msgObj.message - Text content of the message.
- * @param {string} msgObj.timestamp - Formatted timestamp string of the message.
+ * @param {Object} messageData - Object containing message data.
+ * @param {number} messageData.chat_id - Foreign key reference to the associated chat.
+ * @param {string} messageData.sender - Name or phone number of the message sender.
+ * @param {string} messageData.message - Text content of the message.
+ * @param {string} messageData.timestamp - Formatted timestamp string of the message.
  */
-export function addToMessages(msgObj) {
-    const insertMsg = db.prepare(`
+export function insertMessage(messageData) {
+    const insertMessageStmt = db.prepare(`
         INSERT INTO messages (chat_id, sender, message, timestamp)
         VALUES (@chat_id, @sender, @message, @timestamp)
         RETURNING *
     `);
 
-    insertMsg.run({
-        chat_id: msgObj.chat_id,
-        sender: msgObj.sender,
-        message: msgObj.message,
-        timestamp: msgObj.timestamp
+    insertMessageStmt.run({
+        chat_id: messageData.chat_id,
+        sender: messageData.sender,
+        message: messageData.message,
+        timestamp: messageData.timestamp
     });
 }

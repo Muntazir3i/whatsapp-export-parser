@@ -3,56 +3,59 @@
  * @description High-level stream importer for reading WhatsApp export files, tracking import progress, and invoking callbacks for parsed messages.
  */
 
-import { fileStream } from "./reader.js";
-import { msgParser, buildMessageObject } from "./messageParser.js";
+import { createLineReader } from "./reader.js";
+import { parseMessageLine, parseMessageText } from "./messageParser.js";
 import fs from "fs";
 
 /**
  * Extracts the relative file name and contact name from the file path.
  *
- * @param {string} location - File path string.
+ * @param {string} filePath - Target chat export file path string.
  * @returns {[string, string]} Array containing `[fileName, contactName]`.
  */
-function fileNameExtractor(location) {
-    let indexOfWith = location.indexOf("with") + 5;
+function extractChatFileInfo(filePath) {
+    let withPrefixIndex = filePath.indexOf("with") + 5;
 
-    let fileName = location.slice(indexOfWith);
-    let indexOfDot = fileName.indexOf(".");
-    let name = fileName.slice(0, indexOfDot);
+    let fileName = filePath.slice(withPrefixIndex);
+    let dotExtensionIndex = fileName.indexOf(".");
+    let contactName = fileName.slice(0, dotExtensionIndex);
 
-    return [fileName, name];
+    return [fileName, contactName];
 }
 
 /**
  * Prepares chat metadata (chat name and file name) from a target export path.
  *
- * @param {string} location - File path string to export file.
+ * @param {string} filePath - Path to the chat export file.
  * @returns {{ name: string, file_name: string }} Chat metadata object.
  */
-export function importChat(location) {
-    let [fileName, name] = fileNameExtractor(location);
-    return { name: name, file_name: fileName };
+export function extractChatMetadata(filePath) {
+    let [fileName, contactName] = extractChatFileInfo(filePath);
+    return { name: contactName, file_name: fileName };
 }
 
 /**
  * Streams messages line-by-line from a text file, displaying a CLI progress bar, and invoking a callback for each parsed message.
  *
- * @param {string} location - Path to the WhatsApp export `.txt` file.
- * @param {Function} onMessage - Async callback function `(msgObj) => Promise<void>` invoked when a message object is ready.
+ * @param {string} filePath - Path to the WhatsApp export `.txt` file.
+ * @param {Function} onMessageParsed - Async callback function `(messageObj) => Promise<void>` invoked when a message object is ready.
  */
-export async function importMessage(location, onMessage) {
+export async function streamChatMessages(filePath, onMessageParsed) {
     // Obtain readline interface for streaming file read
-    const rl = fileStream(location);
+    const lineReader = createLineReader(filePath);
 
     // Compute total file size in bytes for progress calculation
-    const totalBytes = fs.statSync(location).size;
+    const totalBytes = fs.statSync(filePath).size;
     let bytesRead = 0;
-    const width = 30; // Terminal progress bar character width
+    const progressBarWidth = 30; // Terminal progress bar character width
 
     // Mutable state container to hold partially built multi-line messages
-    const state = { buildingMsg: "" };
+    const state = { accumulatedMessageBuffer: "" };
 
-    for await (const line of rl) {
+    // Track last rendered percentage to throttle stdout writes and avoid log buffer inflation
+    let lastRenderedPercent = "";
+
+    for await (const line of lineReader) {
         if (line.length === 0) continue;
 
         // Update byte count (line byte length + 1 byte for newline separator)
@@ -60,28 +63,33 @@ export async function importMessage(location, onMessage) {
 
         // Calculate percentage progress and construct ASCII progress bar
         const progress = bytesRead / totalBytes;
-        const filled = Math.round(progress * width);
+        const formattedPercent = (progress * 100).toFixed(1);
 
-        const bar =
-            "█".repeat(filled) +
-            "-".repeat(width - filled);
+        if (formattedPercent !== lastRenderedPercent) {
+            lastRenderedPercent = formattedPercent;
+            const filledWidth = Math.round(progress * progressBarWidth);
 
-        // Render progress bar dynamically on current CLI line
-        process.stdout.write(
-            `\r[${bar}] ${(progress * 100).toFixed(1)}%`
-        );
+            const progressBar =
+                "█".repeat(filledWidth) +
+                "-".repeat(progressBarWidth - filledWidth);
+
+            // Render progress bar dynamically on current CLI line
+            process.stdout.write(
+                `\r[${progressBar}] ${formattedPercent}%`
+            );
+        }
 
         // Parse line and attempt to finalize complete message object
-        const msgObj = msgParser(line, state);
+        const parsedMessageObj = parseMessageLine(line, state);
 
-        if (msgObj) {
-            await onMessage(msgObj);
+        if (parsedMessageObj) {
+            await onMessageParsed(parsedMessageObj);
         }
     }
 
     // Process any remaining tail message left in the accumulator state at EOF
-    if (state.buildingMsg !== "") {
-        await onMessage(buildMessageObject(state.buildingMsg));
+    if (state.accumulatedMessageBuffer !== "") {
+        await onMessageParsed(parseMessageText(state.accumulatedMessageBuffer));
     }
 
     console.log("\nImport complete.");
