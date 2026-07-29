@@ -1,7 +1,7 @@
 /**
  * @file index.js
  * @description Composition Root for the WhatsApp Export Parser application.
- * Instantiates components and orchestrates the ETL pipeline (Extract, Transform, Load).
+ * Instantiates components and orchestrates the ETL pipeline (Extract, Transform, Load)
  */
 
 import { createDatabaseConnection } from "./db/database.js";
