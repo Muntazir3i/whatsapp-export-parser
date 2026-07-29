@@ -1,5 +1,6 @@
 import { fileStream } from "./reader.js";
 import { msgParser, buildMessageObject } from "./messageParser.js";
+import fs from "fs";
 
 
 function fileNameExtractor(location) {
@@ -18,7 +19,7 @@ export function importChat(location) {
     return { name: name, file_name: fileName }
 }
 
-import fs from "fs";
+
 
 export async function importMessage(location, onMessage) {
     const rl = fileStream(location);
