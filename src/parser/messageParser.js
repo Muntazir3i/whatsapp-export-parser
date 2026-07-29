@@ -11,7 +11,7 @@
  * @param {string} lineText - The line text to evaluate.
  * @returns {boolean} True if the prefix represents a valid date, false otherwise.
  */
-function isMessageStartLine(lineText) {
+export function isMessageStartLine(lineText) {
     let dateString = lineText.slice(0, 8);
     let [day, month, year] = dateString.split("/");
     let dateObj = new Date(year, month - 1, day);
@@ -25,14 +25,9 @@ function isMessageStartLine(lineText) {
  * @returns {Object} Structured message object with `sender`, `message`, and `timestamp`.
  */
 export function parseMessageText(rawMessageText) {
-    // 1. Separate the timestamp from the sender and message content
     const [timestampStr, rest] = rawMessageText.split(" - ");
-
-    // 2. Separate the sender name/number from the message body
     const [sender, ...msgParts] = rest.split(": ");
-    const messageContent = msgParts.join(": "); // Safely handles colons present within the message content
-
-    // 3. Separate date and time components (e.g. "DD/MM/YY, HH:MM")
+    const messageContent = msgParts.join(": ");
     const [dateStr, timeStr] = timestampStr.split(", ");
 
     return {
@@ -43,27 +38,65 @@ export function parseMessageText(rawMessageText) {
 }
 
 /**
- * Stateful line parser that accumulates multi-line WhatsApp messages.
- * When a line starting with a valid date prefix is encountered, any currently building message is finalized and returned.
- *
- * @param {string} currentLine - Current line read from the export stream.
- * @param {Object} state - State accumulator object containing `accumulatedMessageBuffer`.
- * @param {string} state.accumulatedMessageBuffer - Currently accumulated raw message text.
- * @returns {Object|null} Completed message object if a new message boundary was found, or null if accumulating.
+ * Encapsulates multi-line message buffering and line parsing state.
+ */
+export class MessageStreamBuffer {
+    constructor() {
+        this.buffer = "";
+    }
+
+    /**
+     * Processes a single line read from the export stream.
+     * 
+     * @param {string} line - Current line from the chat file.
+     * @returns {Object|null} Parsed message object if a message boundary was completed, or null if accumulating.
+     */
+    processLine(line) {
+        if (isMessageStartLine(line)) {
+            let completedMsg = null;
+            if (this.buffer !== "") {
+                completedMsg = parseMessageText(this.buffer);
+            }
+            this.buffer = line;
+            return completedMsg;
+        } else {
+            this.buffer += `\n${line}`;
+            return null;
+        }
+    }
+
+    /**
+     * Flushes and returns any remaining message buffered at the end of stream.
+     * 
+     * @returns {Object|null} Final message object, or null if buffer is empty.
+     */
+    flush() {
+        if (this.buffer !== "") {
+            const finalMsg = parseMessageText(this.buffer);
+            this.buffer = "";
+            return finalMsg;
+        }
+        return null;
+    }
+}
+
+/**
+ * Functional wrapper for legacy state object parsing.
+ * 
+ * @param {string} currentLine - Line to parse.
+ * @param {Object} state - State container object.
+ * @returns {Object|null} Completed message object or null.
  */
 export function parseMessageLine(currentLine, state) {
     let hasValidDatePrefix = isMessageStartLine(currentLine);
     let completedMessageObj = null;
 
     if (hasValidDatePrefix) {
-        // If state already holds accumulated text, build and return the completed message object
         if (state.accumulatedMessageBuffer !== "") {
             completedMessageObj = parseMessageText(state.accumulatedMessageBuffer);
         }
-        // Start accumulating the new message
         state.accumulatedMessageBuffer = currentLine;
     } else {
-        // Continuation line of a multi-line message: append with newline separator
         state.accumulatedMessageBuffer += `\n${currentLine}`;
     }
 

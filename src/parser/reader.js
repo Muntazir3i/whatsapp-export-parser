@@ -3,7 +3,7 @@
  * @description Provides streaming utilities for reading text files line-by-line using Node.js readline interface.
  */
 
-import { createReadStream } from 'fs';
+import { createReadStream, statSync } from 'fs';
 import readline from 'readline/promises';
 
 /**
@@ -23,6 +23,16 @@ export function createLineReader(filePath) {
   });
 
   return lineReader;
+}
+
+/**
+ * Returns the total byte size of a file.
+ * 
+ * @param {string} filePath - File system path.
+ * @returns {number} Total size in bytes.
+ */
+export function getFileByteSize(filePath) {
+  return statSync(filePath).size;
 }
 
 

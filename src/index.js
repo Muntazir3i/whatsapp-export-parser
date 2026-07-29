@@ -1,52 +1,61 @@
 /**
  * @file index.js
- * @description Main entry point for the WhatsApp export parser application.
- * Executes the ETL pipeline: creates DB schema, reads export file, streams & parses messages,
- * and performs batched transaction insertions into SQLite for maximum throughput.
+ * @description Composition Root for the WhatsApp Export Parser application.
+ * Instantiates components and orchestrates the ETL pipeline (Extract, Transform, Load).
  */
 
-import { createSchema, insertChatMetadata, insertMessage } from "./db/schema.js";
-import { extractChatMetadata, streamChatMessages } from "./parser/importer.js";
-import db from "./db/database.js";
+import { createDatabaseConnection } from "./db/database.js";
+import { createSchema, ChatRepository } from "./db/schema.js";
+import { extractChatMetadata, streamChatMessages, ConsoleProgressReporter } from "./parser/importer.js";
 
-// Target WhatsApp chat export text file path
-const exportFilePath = "/home/mdot/projectFolder/whatsapp-export-parser/WhatsApp Chat with Ana.txt";
-
-// 1. Ensure SQLite database tables (`chats` and `messages`) exist
-createSchema();
-
-// 2. Register chat metadata record in database and retrieve generated `chatId`
-const chatRecord = insertChatMetadata(extractChatMetadata(exportFilePath));
-const chatId = chatRecord.id;
-
-// 3. Configure batching size and buffer array for efficient bulk database insertion
+// Configuration constants
+const EXPORT_FILE_PATH = "/home/mdot/projectFolder/whatsapp-export-parser/WhatsApp Chat with Ana.txt";
 const BATCH_SIZE = 1000;
-let messageBuffer = [];
 
-/**
- * Pre-compiled SQLite transaction wrapper to execute bulk message inserts inside a single database transaction.
- */
-const insertBatchTransaction = db.transaction((messages) => {
-    for (const messageData of messages) {
-        insertMessage(messageData);
+async function main() {
+    // 1. Initialize SQLite Database Connection & Schema
+    const db = createDatabaseConnection("chats.db");
+    createSchema(db);
+
+    // 2. Initialize Data Repository & Console UI Progress Reporter
+    const repository = new ChatRepository(db);
+    const progressReporter = new ConsoleProgressReporter();
+
+    // 3. Register Chat Session Metadata
+    const chatMetadata = extractChatMetadata(EXPORT_FILE_PATH);
+    const chatRecord = repository.createChat(chatMetadata);
+    const chatId = chatRecord.id;
+
+    // 4. Stream and Batch Message Insertions
+    let messageBuffer = [];
+
+    await streamChatMessages(
+        EXPORT_FILE_PATH,
+        async (parsedMessage) => {
+            messageBuffer.push({
+                chat_id: chatId,
+                ...parsedMessage
+            });
+
+            if (messageBuffer.length >= BATCH_SIZE) {
+                repository.insertBatch(messageBuffer);
+                messageBuffer = [];
+            }
+        },
+        (bytesRead, totalBytes) => {
+            progressReporter.update(bytesRead, totalBytes);
+        }
+    );
+
+    // 5. Flush Remaining Buffer Tail & Complete
+    if (messageBuffer.length > 0) {
+        repository.insertBatch(messageBuffer);
     }
-});
 
-// 4. Stream and parse messages line-by-line from the export file
-await streamChatMessages(exportFilePath, async (parsedMessage) => {
-    messageBuffer.push({
-        chat_id: chatId,
-        ...parsedMessage
-    });
-
-    // When buffer reaches batch size limit, write batch to database within transaction and reset buffer
-    if (messageBuffer.length >= BATCH_SIZE) {
-        insertBatchTransaction(messageBuffer);
-        messageBuffer = [];
-    }
-});
-
-// 5. Flush and insert any remaining residual messages in the buffer after file reading completes
-if (messageBuffer.length > 0) {
-    insertBatchTransaction(messageBuffer);
+    progressReporter.complete();
 }
+
+main().catch((err) => {
+    console.error("Pipeline execution failed:", err);
+    process.exit(1);
+});

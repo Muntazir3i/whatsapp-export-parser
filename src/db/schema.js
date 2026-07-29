@@ -1,17 +1,16 @@
 /**
  * @file schema.js
- * @description Manages SQLite table creation schemas and helper functions for database insertions.
+ * @description Defines database schema DDL and provides a ChatRepository class for data access and transactional batch insertions.
  */
-
-import db from "./database.js";
 
 /**
  * Creates the required tables (`chats` and `messages`) in the database if they do not already exist.
+ *
+ * @param {import("better-sqlite3").Database} db - SQLite database instance.
  */
-export function createSchema() {
+export function createSchema(db) {
     console.log("Checking database schema...");
 
-    // Execute schema DDL queries
     db.exec(
         `
         CREATE TABLE IF NOT EXISTS chats(
@@ -36,49 +35,77 @@ export function createSchema() {
 }
 
 /**
- * Inserts a new chat record into the `chats` table.
- * 
- * @param {Object} chatData - Object containing chat metadata.
- * @param {string} chatData.name - The extracted contact/chat name.
- * @param {string} chatData.file_name - The file name of the exported chat file.
- * @returns {Object} The inserted chat database row object including generated `id`.
+ * Repository encapsulating database operations for chats and messages.
  */
-export function insertChatMetadata(chatData) {
-    const insertChatStmt = db.prepare(`
-        INSERT INTO chats (name, file_name)
-        VALUES (@name, @file_name)
-        RETURNING *
-    `);
+export class ChatRepository {
+    /**
+     * Constructs a ChatRepository instance and prepares SQL statements.
+     * 
+     * @param {import("better-sqlite3").Database} db - Active SQLite database instance.
+     */
+    constructor(db) {
+        this.db = db;
 
-    const insertedRow = insertChatStmt.get({
-        name: chatData.name,
-        file_name: chatData.file_name
-    });
+        // Pre-compile SQL insert statements for optimal performance
+        this.insertChatStmt = this.db.prepare(`
+            INSERT INTO chats (name, file_name)
+            VALUES (@name, @file_name)
+            RETURNING *
+        `);
 
-    console.log("Database Insertion Result:", insertedRow);
-    return insertedRow;
-}
+        this.insertMessageStmt = this.db.prepare(`
+            INSERT INTO messages (chat_id, sender, message, timestamp)
+            VALUES (@chat_id, @sender, @message, @timestamp)
+        `);
 
-/**
- * Inserts a single message record into the `messages` table.
- * 
- * @param {Object} messageData - Object containing message data.
- * @param {number} messageData.chat_id - Foreign key reference to the associated chat.
- * @param {string} messageData.sender - Name or phone number of the message sender.
- * @param {string} messageData.message - Text content of the message.
- * @param {string} messageData.timestamp - Formatted timestamp string of the message.
- */
-export function insertMessage(messageData) {
-    const insertMessageStmt = db.prepare(`
-        INSERT INTO messages (chat_id, sender, message, timestamp)
-        VALUES (@chat_id, @sender, @message, @timestamp)
-        RETURNING *
-    `);
+        // Pre-compile bulk batch insert transaction wrapper
+        this.batchTransaction = this.db.transaction((messages) => {
+            for (const msg of messages) {
+                this.insertMessageStmt.run({
+                    chat_id: msg.chat_id,
+                    sender: msg.sender,
+                    message: msg.message,
+                    timestamp: msg.timestamp
+                });
+            }
+        });
+    }
 
-    insertMessageStmt.run({
-        chat_id: messageData.chat_id,
-        sender: messageData.sender,
-        message: messageData.message,
-        timestamp: messageData.timestamp
-    });
+    /**
+     * Inserts a new chat metadata record.
+     * 
+     * @param {Object} chatData - Chat metadata object containing `name` and `file_name`.
+     * @returns {Object} The inserted database row object including `id`.
+     */
+    createChat(chatData) {
+        const insertedRow = this.insertChatStmt.get({
+            name: chatData.name,
+            file_name: chatData.file_name
+        });
+        console.log("Chat Record Created:", insertedRow);
+        return insertedRow;
+    }
+
+    /**
+     * Inserts a single message record.
+     * 
+     * @param {Object} messageData - Message data object.
+     */
+    insertMessage(messageData) {
+        this.insertMessageStmt.run({
+            chat_id: messageData.chat_id,
+            sender: messageData.sender,
+            message: messageData.message,
+            timestamp: messageData.timestamp
+        });
+    }
+
+    /**
+     * Inserts an array of messages within a single SQLite transaction.
+     * 
+     * @param {Array<Object>} messages - Array of message objects to insert in bulk.
+     */
+    insertBatch(messages) {
+        this.batchTransaction(messages);
+    }
 }
