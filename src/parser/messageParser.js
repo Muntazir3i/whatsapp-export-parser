@@ -1,5 +1,3 @@
-
-
 /**
  * @file messageParser.js
  * @description Logic for identifying message start lines, parsing WhatsApp export line formats, and building structured message objects.
@@ -106,6 +104,29 @@ export function parseMessageLine(currentLine, state) {
     return completedMessageObj;
 }
  */
+
+
+/** Simple Implementation Of Edge Case Function  */
+
+export function edgeCaseCheck(line){
+    if(line.includes("<Media omitted>")){
+        let result = parseMessageText(line);
+        return {...result, type: "Media"}
+    }
+    if(line.includes("This message was deleted")){
+        let result = parseMessageText(line);
+        return {...result, type: "deleted"}
+    }
+     if(line.includes("changed the group description")){
+        let result = parseMessageText(line);
+        return {...result, type: "system"}
+    }
+
+}
+
+let msgObj = edgeCaseCheck("10/1/21, 12:18 AM - Mir Aatif: Lololol")
+console.log(msgObj);
+
 
 
 

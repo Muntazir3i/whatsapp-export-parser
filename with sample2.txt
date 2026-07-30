@@ -1,0 +1,48 @@
+20/07/26, 10:15 AM - Ali: Hey, how are you?
+
+20/07/26, 10:16 AM - You: I'm good.
+
+20/07/26, 10:17 AM - Ali: Just finished work.
+Heading home now.
+Should reach in 30 minutes.
+
+20/07/26, 10:18 AM - You: Nice!
+
+20/07/26, 10:19 AM - Ali: Here's my shopping list:
+Milk
+Bread
+
+Eggs
+Butter
+
+20/07/26, 10:20 AM - Ali: <Media omitted>
+
+20/07/26, 10:21 AM - You: This message was deleted
+
+20/07/26, 10:22 AM - Ali changed the group subject to "Weekend Plan"
+
+20/07/26, 10:23 AM - Ali changed the group description
+
+20/07/26, 10:24 AM - Ali created group "Weekend Plan"
+
+20/07/26, 10:25 AM - Sara joined using this group's invite link
+
+20/07/26, 10:26 AM - You added Ahmed
+
+20/07/26, 10:27 AM - Ahmed left
+
+20/07/26, 10:28 AM - Ali removed Sara
+
+20/07/26, 10:29 AM - Messages and calls are end-to-end encrypted. No one outside of this chat can read or listen to them.
+
+20/07/26, 10:30 AM - You: This is a message with multiple paragraphs.
+
+Second paragraph starts here.
+
+Third paragraph starts here.
+
+20/07/26, 22:45 - Ali: This message uses a 24-hour timestamp.
+
+21/07/26, 08:00 AM - You: Good morning!
+
+21/07/26, 08:01 AM - Ali: Morning 😊
