@@ -87,6 +87,9 @@ export class MessageStreamBuffer {
  * @param {Object} state - State container object.
  * @returns {Object|null} Completed message object or null.
  */
+
+
+/**
 export function parseMessageLine(currentLine, state) {
     let hasValidDatePrefix = isMessageStartLine(currentLine);
     let completedMessageObj = null;
@@ -102,6 +105,7 @@ export function parseMessageLine(currentLine, state) {
 
     return completedMessageObj;
 }
+ */
 
 
 
