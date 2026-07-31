@@ -109,22 +109,22 @@ export function parseMessageLine(currentLine, state) {
 /** Simple Implementation Of Edge Case Function  */
 
 export function edgeCaseCheck(line){
-    if(line.includes("<Media omitted>")){
-        let result = parseMessageText(line);
-        return {...result, type: "Media"}
+    let result = parseMessageText(line)
+
+    if(result.message === "This message was deleted"){
+        return {...result, type:"deleted"}
     }
-    if(line.includes("This message was deleted")){
-        let result = parseMessageText(line);
-        return {...result, type: "deleted"}
+
+    if(result.message === "<Media omitted>"){
+        return {...result, type:"media"}
     }
-     if(line.includes("changed the group description")){
-        let result = parseMessageText(line);
-        return {...result, type: "system"}
-    }
+
+   
+    
 
 }
 
-let msgObj = edgeCaseCheck("10/1/21, 12:18 AM - Mir Aatif: Lololol")
+let msgObj = edgeCaseCheck("")
 console.log(msgObj);
 
 
