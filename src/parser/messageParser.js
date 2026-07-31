@@ -108,24 +108,7 @@ export function parseMessageLine(currentLine, state) {
 
 /** Simple Implementation Of Edge Case Function  */
 
-export function edgeCaseCheck(line){
-    let result = parseMessageText(line)
 
-    if(result.message === "This message was deleted"){
-        return {...result, type:"deleted"}
-    }
-
-    if(result.message === "<Media omitted>"){
-        return {...result, type:"media"}
-    }
-
-   
-    
-
-}
-
-let msgObj = edgeCaseCheck("")
-console.log(msgObj);
 
 
 
