@@ -23,8 +23,8 @@ export function createSchema(db) {
         CREATE TABLE IF NOT EXISTS messages(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             chat_id INTEGER NOT NULL,
-            sender TEXT NOT  NULL,
-            message TEXT NOT NULL,
+            sender TEXT,
+            message TEXT,
             timestamp TEXT NOT NULL,
             FOREIGN KEY (chat_id) REFERENCES chats (id)
         );

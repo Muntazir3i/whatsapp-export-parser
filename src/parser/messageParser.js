@@ -13,7 +13,7 @@ export function isMessageStartLine(lineText) {
     const [timestampStr] = lineText.split(" - ");
     const [dateString] = timestampStr.split(", ")
     let [day, month, year] = dateString.split("/");
-    let fullYear = "20"+year;
+    let fullYear = "20" + year;
     let dateObj = new Date(fullYear, month - 1, day);
     return !Number.isNaN(dateObj.getDate());
 }
@@ -26,15 +26,25 @@ export function isMessageStartLine(lineText) {
  */
 export function parseMessageText(rawMessageText) {
     const [timestampStr, rest] = rawMessageText.split(" - ");
-    const [sender, ...msgParts] = rest.split(": ");
-    const messageContent = msgParts.join(": ");
-    const [dateStr, timeStr] = timestampStr.split(", ");
+    if (rest.includes(": ")) {
+        const [sender, ...msgParts] = rest.split(": ");
+        const messageContent = msgParts.join(": ");
+        const [dateStr, timeStr] = timestampStr.split(", ");
 
-    return {
-        sender: sender,
-        message: messageContent,
-        timestamp: `${dateStr} ${timeStr}`,
-    };
+        return {
+            sender: sender,
+            message: messageContent,
+            timestamp: `${dateStr} ${timeStr}`,
+        };
+    } else {
+        const [messageContent] = rest.split()
+        const [dateStr, timeStr] = timestampStr.split(", ");
+        return {
+            sender: null,
+            message: messageContent,
+            timestamp: `${dateStr} ${timeStr}`,
+        }
+    }
 }
 
 /**
