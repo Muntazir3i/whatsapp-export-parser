@@ -73,12 +73,12 @@ export function parseMessageText(rawMessageText) {
 // console.log(obj);
 
 export function isMessageStartLine(lineText) {
-    const [timestampStr, rest] = lineText.split(" - ");
-    console.log(timestampStr);
-    // let [day, month, year] = dateString.split("/");
-    // let fullYear = "20"+year;
-    // let dateObj = new Date(fullYear, month - 1, day);
-    // return !Number.isNaN(dateObj.getDate());
+    const [timestampStr] = lineText.split(" - ");
+    const [dateString] = timestampStr.split(", ")
+    let [day, month, year] = dateString.split("/");
+    let fullYear = "20"+year;
+    let dateObj = new Date(fullYear, month - 1, day);
+    return !Number.isNaN(dateObj.getDate());
 }
 
 let result = isMessageStartLine("10/5/20, 11:27 PM - Mir Aatif: <Media omitted>")

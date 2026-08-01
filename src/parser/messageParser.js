@@ -10,9 +10,11 @@
  * @returns {boolean} True if the prefix represents a valid date, false otherwise.
  */
 export function isMessageStartLine(lineText) {
-    let dateString = lineText.slice(0, 8);
+    const [timestampStr] = lineText.split(" - ");
+    const [dateString] = timestampStr.split(", ")
     let [day, month, year] = dateString.split("/");
-    let dateObj = new Date(year, month - 1, day);
+    let fullYear = "20"+year;
+    let dateObj = new Date(fullYear, month - 1, day);
     return !Number.isNaN(dateObj.getDate());
 }
 
