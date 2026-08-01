@@ -16,7 +16,7 @@ export function parseMessageText(rawMessageText) {
                return {
           sender: null,
           message: messageContent,
-          timestamp: `${dateStr} ${timeStr}`,
+          timestamp: `${dateStr} ${timeStr}`
     }
     }
 }
