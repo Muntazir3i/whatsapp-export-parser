@@ -26,7 +26,7 @@ export function createSchema(db) {
             sender TEXT,
             message TEXT,
             timestamp TEXT NOT NULL,
-            type TEXT NOT NULL
+            type TEXT NOT NULL,
             FOREIGN KEY (chat_id) REFERENCES chats (id)
         );
         `

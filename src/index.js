@@ -9,7 +9,7 @@ import { createSchema, ChatRepository } from "./db/schema.js";
 import { extractChatMetadata, streamChatMessages, ConsoleProgressReporter } from "./parser/importer.js";
 
 // Configuration constants
-const EXPORT_FILE_PATH = "/home/mdot/projectFolder/whatsapp-export-parser/with sample3.txt";
+const EXPORT_FILE_PATH = "/home/mdot/projectFolder/whatsapp-export-parser/WhatsApp Chat with Ana.txt";
 const BATCH_SIZE = 1000;
 
 async function main() {
