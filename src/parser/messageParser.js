@@ -34,8 +34,7 @@ export function parseMessageText(rawMessageText) {
         return {
             sender: sender,
             message: messageContent,
-            timestamp: `${dateStr} ${timeStr}`,
-            type: "text"
+            timestamp: `${dateStr} ${timeStr}`
         };
     } else {
         const [messageContent] = rest.split()
@@ -43,8 +42,7 @@ export function parseMessageText(rawMessageText) {
         return {
             sender: null,
             message: messageContent,
-            timestamp: `${dateStr} ${timeStr}`,
-            type:"system"
+            timestamp: `${dateStr} ${timeStr}`
         }
     }
 }
