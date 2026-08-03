@@ -48,6 +48,30 @@ export function parseMessageText(rawMessageText) {
 }
 
 /**
+ * Classifies a parsed WhatsApp message and assigns a message type.
+ *
+ * Determines whether the message is a normal text message, media placeholder,
+ * deleted message, or a WhatsApp system event, and returns the original
+ * message object with an added `type` property.
+ *
+ * @param {Object} msgObj - Parsed message object containing `sender`, `message`, and `timestamp`.
+ * @returns {Object} Message object with an additional `type` property.
+ */
+
+export function classifyMessage(msgObj) {
+    if (msgObj.sender === null) {
+        return { ...msgObj, type: "system" }
+    } else if (msgObj.message === "<Media omitted>") {
+        return { ...msgObj, type: "media" }
+    } else if (msgObj.message === "You deleted this message" || msgObj.message === "This message was deleted") {
+        return { ...msgObj, type: "deleted" }
+    } else {
+        return { ...msgObj, type: "text" }
+    }
+}
+
+
+/**
  * Encapsulates multi-line message buffering and line parsing state.
  */
 export class MessageStreamBuffer {
@@ -65,7 +89,7 @@ export class MessageStreamBuffer {
         if (isMessageStartLine(line)) {
             let completedMsg = null;
             if (this.buffer !== "") {
-                completedMsg = parseMessageText(this.buffer);
+                completedMsg = classifyMessage(parseMessageText(this.buffer));
             }
             this.buffer = line;
             return completedMsg;
@@ -82,7 +106,7 @@ export class MessageStreamBuffer {
      */
     flush() {
         if (this.buffer !== "") {
-            const finalMsg = parseMessageText(this.buffer);
+            const finalMsg = classifyMessage(parseMessageText(this.buffer));
             this.buffer = "";
             return finalMsg;
         }
