@@ -26,6 +26,7 @@ export function createSchema(db) {
             sender TEXT,
             message TEXT,
             timestamp TEXT NOT NULL,
+            type TEXT NOT NULL,
             FOREIGN KEY (chat_id) REFERENCES chats (id)
         );
         `
@@ -65,7 +66,8 @@ export class ChatRepository {
                     chat_id: msg.chat_id,
                     sender: msg.sender,
                     message: msg.message,
-                    timestamp: msg.timestamp
+                    timestamp: msg.timestamp,
+                    type: msg.type
                 });
             }
         });
