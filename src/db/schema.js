@@ -55,8 +55,8 @@ export class ChatRepository {
         `);
 
         this.insertMessageStmt = this.db.prepare(`
-            INSERT INTO messages (chat_id, sender, message, timestamp)
-            VALUES (@chat_id, @sender, @message, @timestamp)
+            INSERT INTO messages (chat_id, sender, message, timestamp, type)
+            VALUES (@chat_id, @sender, @message, @timestamp, @type)
         `);
 
         // Pre-compile bulk batch insert transaction wrapper
