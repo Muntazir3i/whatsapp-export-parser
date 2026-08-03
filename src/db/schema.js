@@ -25,7 +25,8 @@ export function createSchema(db) {
             chat_id INTEGER NOT NULL,
             sender TEXT,
             message TEXT,
-            timestamp TEXT NOT NULL
+            timestamp TEXT NOT NULL,
+            type TEXT NOT NULL
             FOREIGN KEY (chat_id) REFERENCES chats (id)
         );
         `
@@ -54,8 +55,8 @@ export class ChatRepository {
         `);
 
         this.insertMessageStmt = this.db.prepare(`
-            INSERT INTO messages (chat_id, sender, message, timestamp)
-            VALUES (@chat_id, @sender, @message, @timestamp)
+            INSERT INTO messages (chat_id, sender, message, timestamp, type)
+            VALUES (@chat_id, @sender, @message, @timestamp, @type)
         `);
 
         // Pre-compile bulk batch insert transaction wrapper
@@ -65,7 +66,8 @@ export class ChatRepository {
                     chat_id: msg.chat_id,
                     sender: msg.sender,
                     message: msg.message,
-                    timestamp: msg.timestamp
+                    timestamp: msg.timestamp,
+                    type: msg.type
                 });
             }
         });
