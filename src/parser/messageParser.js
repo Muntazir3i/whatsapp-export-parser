@@ -37,11 +37,10 @@ export function parseMessageText(rawMessageText) {
             timestamp: `${dateStr} ${timeStr}`
         };
     } else {
-        const [messageContent] = rest.split()
         const [dateStr, timeStr] = timestampStr.split(", ");
         return {
             sender: null,
-            message: messageContent,
+            message: rest,
             timestamp: `${dateStr} ${timeStr}`
         }
     }
