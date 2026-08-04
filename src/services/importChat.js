@@ -60,6 +60,8 @@ export async function extractZip(zipFilePath, outputDir) {
 
 await extractZip(zipPath, `../data/imports/${contact}`);  
 
-const items = await readdir(`../data/imports/${contact}`);
+const items = await readdir(`../data/imports/Mom`);
 
-console.log(items);
+
+let [textFile] = (items.filter((item) => item.includes(".txt")));
+console.log(textFile);
