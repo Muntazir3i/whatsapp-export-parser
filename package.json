@@ -19,7 +19,8 @@
     "start": "node src/index.js"
   },
   "dependencies": {
-    "better-sqlite3": "^13.0.1"
+    "better-sqlite3": "^13.0.1",
+    "extract-zip": "^2.0.1"
   },
   "allowScripts": {
     "better-sqlite3@13.0.1": true
