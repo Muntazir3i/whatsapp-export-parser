@@ -1,44 +1,28 @@
 /**
  * @file importChat.js
  * @description
- * Demonstrates importing a WhatsApp ZIP export by:
+ * Imports a WhatsApp ZIP export by:
  * - Prompting the user for the ZIP file path.
  * - Extracting the archive.
- * - Reading the extracted directory contents.
+ * - Locating the exported chat text file.
  */
 
 import extract from "extract-zip";
 import path from "path";
 import { existsSync, mkdirSync } from "fs";
 import { readdir } from "fs/promises";
-import readline from "readline/promises";
-import { stdin as input, stdout as output } from "process";
 import { extractChatFileInfo } from "../parser/importer.js";
 
-const rl = readline.createInterface({
-    input,
-    output
-});
 
-const zipPath = await rl.question("Enter ZIP file path: ");
-
-const [fileName, contact] = extractChatFileInfo(zipPath);
-
-console.log(fileName, contact);
-
-
-
-rl.close();
 
 /**
  * Extracts a ZIP archive into the specified directory.
  *
  * @param {string} zipFilePath - Path to the ZIP archive.
- * @param {string} outputDir - Destination directory for the extracted files.
+ * @param {string} outputDir - Destination directory for extracted files.
  */
 export async function extractZip(zipFilePath, outputDir) {
     try {
-
         if (!existsSync(outputDir)) {
             mkdirSync(outputDir, {
                 recursive: true
@@ -55,13 +39,33 @@ export async function extractZip(zipFilePath, outputDir) {
     } catch (err) {
         console.error("❌ Failed to extract ZIP.");
         console.error(err);
+        throw err;
     }
 }
 
-await extractZip(zipPath, `../data/imports/${contact}`);  
+/**
+ * Finds the exported WhatsApp chat text file inside an extracted import folder.
+ *
+ * @param {string} importDir - Directory containing the extracted ZIP contents.
+ * @returns {Promise<string>} Absolute/relative path to the chat text file.
+ */
+export async function findChatFile(importDir) {
+    const items = await readdir(importDir);
 
-const items = await readdir(`../data/imports/Mom`);
+    const textFile = items.find(item => item.endsWith(".txt"));
 
+    if (!textFile) {
+        throw new Error("No WhatsApp chat text file found.");
+    }
 
-let [textFile] = (items.filter((item) => item.includes(".txt")));
-console.log(textFile);
+    return path.join(importDir, textFile);
+}
+
+// // Extract the ZIP
+// await extractZip(zipPath, importDir);
+
+// // Locate the exported chat file
+// const chatFilePath = await findChatFile(importDir);
+
+// console.log("Chat file found at:");
+// console.log(chatFilePath);
