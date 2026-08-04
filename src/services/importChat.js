@@ -13,6 +13,7 @@ import { existsSync, mkdirSync } from "fs";
 import { readdir } from "fs/promises";
 import readline from "readline/promises";
 import { stdin as input, stdout as output } from "process";
+import { extractChatFileInfo } from "../parser/importer.js";
 
 const rl = readline.createInterface({
     input,
@@ -20,6 +21,12 @@ const rl = readline.createInterface({
 });
 
 const zipPath = await rl.question("Enter ZIP file path: ");
+
+const [fileName, contact] = extractChatFileInfo(zipPath);
+
+console.log(fileName, contact);
+
+
 
 rl.close();
 
@@ -51,8 +58,8 @@ export async function extractZip(zipFilePath, outputDir) {
     }
 }
 
-await extractZip(zipPath, "./temp");
+await extractZip(zipPath, `../data/imports/${contact}`);  
 
-const items = await readdir("./temp");
+const items = await readdir(`../data/imports/${contact}`);
 
 console.log(items);
