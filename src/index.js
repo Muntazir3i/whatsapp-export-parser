@@ -9,7 +9,6 @@ import { createSchema, ChatRepository } from "./db/schema.js";
 import { extractChatMetadata, streamChatMessages, ConsoleProgressReporter } from "./parser/importer.js";
 import { extractChatFileInfo } from "./parser/importer.js";
 import { extractZip, findChatFile, grabFileLocation } from "./services/importChat.js";
-import path from "path";
 
 
 
