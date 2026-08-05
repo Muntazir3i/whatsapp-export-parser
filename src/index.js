@@ -7,27 +7,13 @@
 import { createDatabaseConnection } from "./db/database.js";
 import { createSchema, ChatRepository } from "./db/schema.js";
 import { extractChatMetadata, streamChatMessages, ConsoleProgressReporter } from "./parser/importer.js";
-import readline from "readline/promises";
-import { stdin as input, stdout as output } from "process";
 import { extractChatFileInfo } from "./parser/importer.js";
-import { extractZip, findChatFile } from "./services/importChat.js";
+import { extractZip, findChatFile, grabFileLocation } from "./services/importChat.js";
 import path from "path";
 
 
 
-const rl = readline.createInterface({
-    input,
-    output
-});
-
-const zipPath = await rl.question("Enter ZIP file path: ");
-
-rl.close();
-
-const [fileName, contact] = extractChatFileInfo(zipPath);
-
-
-const importDir = path.join("./src/data/imports", contact);
+let [zipPath,importDir] = await grabFileLocation();
 
 //extract zip
 

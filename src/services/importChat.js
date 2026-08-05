@@ -9,9 +9,27 @@
 
 import extract from "extract-zip";
 import path from "path";
+import readline from "readline/promises";
+import { stdin as input, stdout as output } from "process";
 import { existsSync, mkdirSync } from "fs";
 import { readdir } from "fs/promises";
 import { extractChatFileInfo } from "../parser/importer.js";
+
+
+export async function grabFileLocation() {
+
+    const rl = readline.createInterface({
+        input,
+        output
+    });
+
+    const zipPath = await rl.question("Enter ZIP file path: ");
+    rl.close();
+    const [fileName, contact] = extractChatFileInfo(zipPath);
+    const importDir = path.join("./src/data/imports", contact);
+    return [zipPath,importDir];
+
+}
 
 
 
