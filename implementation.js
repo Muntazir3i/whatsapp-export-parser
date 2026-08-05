@@ -1,0 +1,28 @@
+
+
+let result = parseMessageText(`7/18/26, 11:52 PM - Shahzaib Parvaiz Bhai: Programming Languages and Games Built with them
+
+• 🎮 GTA: Vice City - C++
+• 🎮 GTA V - C++
+• 🎮 GTA VI - C++
+• ⛏️ Minecraft (Java Ed.) - Java
+• 🧱 Minecraft (Bedrock) - C++
+• 🔥 Fortnite - C++, Verse
+• 🎯 PUBG: Battlegrounds - C++
+• 📱 PUBG Mobile - C++
+• 💣 Call of Duty: Warzone - C++
+• 🧙 League of Legends - C++, Lua
+• ⚔️ Dota 2 - C++, Lua
+• 🔫 Counter-Strike 2 - C++
+• 🪂 Apex Legends - C++
+• 🎯 Valorant - C++
+• 🟦 Roblox - C++, Luau
+• 🌌 Genshin Impact - C#, C++
+• 🍬 Candy Crush Saga - C++
+• 🏰 Clash of Clans - C++
+• 🔥 Free Fire - C#, C++
+• 👨‍🚀 Among Us - C#
+• 🚇 Subway Surfers - C#
+• ⚡ Pokémon GO - C#`)
+
+console.log(result);

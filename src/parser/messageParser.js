@@ -25,7 +25,11 @@ export function isMessageStartLine(lineText) {
  * @returns {Object} Structured message object with `sender`, `message`, and `timestamp`.
  */
 export function parseMessageText(rawMessageText) {
-    const [timestampStr, rest] = rawMessageText.split(" - ");
+    let indexOfDash = rawMessageText.indexOf(" - ");
+    const timestampStr = rawMessageText.slice(0, indexOfDash);
+    const rest = rawMessageText.slice(indexOfDash + 3)
+
+
     if (rest.includes(": ")) {
         const [sender, ...msgParts] = rest.split(": ");
         const messageContent = msgParts.join(": ");
@@ -113,35 +117,7 @@ export class MessageStreamBuffer {
     }
 }
 
-/**
- * Functional wrapper for legacy state object parsing.
- * 
- * @param {string} currentLine - Line to parse.
- * @param {Object} state - State container object.
- * @returns {Object|null} Completed message object or null.
- */
 
-
-/**
-export function parseMessageLine(currentLine, state) {
-    let hasValidDatePrefix = isMessageStartLine(currentLine);
-    let completedMessageObj = null;
-
-    if (hasValidDatePrefix) {
-        if (state.accumulatedMessageBuffer !== "") {
-            completedMessageObj = parseMessageText(state.accumulatedMessageBuffer);
-        }
-        state.accumulatedMessageBuffer = currentLine;
-    } else {
-        state.accumulatedMessageBuffer += `\n${currentLine}`;
-    }
-
-    return completedMessageObj;
-}
- */
-
-
-/** Simple Implementation Of Edge Case Function  */
 
 
 
