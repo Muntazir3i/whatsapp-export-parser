@@ -6,6 +6,8 @@
 import { createLineReader, getFileByteSize } from "./reader.js";
 import { MessageStreamBuffer } from "./messageParser.js";
 
+import path from "path";
+
 /**
  * Extracts the relative file name and contact name from the file path.
  *
@@ -13,10 +15,12 @@ import { MessageStreamBuffer } from "./messageParser.js";
  * @returns {[string, string]} Array containing `[fileName, contactName]`.
  */
 export function extractChatFileInfo(filePath) {
-    let withPrefixIndex = filePath.indexOf("with") + 5;
-    let fileName = filePath.slice(withPrefixIndex);
-    let dotExtensionIndex = fileName.indexOf(".");
-    let contactName = fileName.slice(0, dotExtensionIndex);
+    const fileName = path.basename(filePath);
+    const ext = path.extname(fileName);
+    const baseNameWithoutExt = path.basename(fileName, ext);
+
+    const withMatch = baseNameWithoutExt.match(/with\s+(.+)$/i);
+    const contactName = withMatch ? withMatch[1].trim() : baseNameWithoutExt.trim();
 
     return [fileName, contactName];
 }
@@ -33,7 +37,7 @@ export function extractChatMetadata(filePath) {
 }
 
 /**
- * UI Reporter that renders a CLI ASCII progress bar.
+ * UI Reporter that renders a CLI ASCII progress bar for extraction and message ingestion.
  */
 export class ConsoleProgressReporter {
     /**
@@ -45,13 +49,13 @@ export class ConsoleProgressReporter {
     }
 
     /**
-     * Renders or updates progress output on stdout.
+     * Renders or updates progress output on stdout for streaming file reads.
      * 
      * @param {number} bytesRead - Bytes processed so far.
      * @param {number} totalBytes - Total file byte size.
      */
     update(bytesRead, totalBytes) {
-        const progressFraction = bytesRead / totalBytes;
+        const progressFraction = totalBytes > 0 ? bytesRead / totalBytes : 1;
         const formattedPercent = (progressFraction * 100).toFixed(1);
 
         if (formattedPercent !== this.lastRenderedPercent) {
@@ -59,8 +63,35 @@ export class ConsoleProgressReporter {
             const filledWidth = Math.round(progressFraction * this.barWidth);
             const progressBar = "█".repeat(filledWidth) + "-".repeat(this.barWidth - filledWidth);
 
-            process.stdout.write(`\r[${progressBar}] ${formattedPercent}%`);
+            process.stdout.write(`\rImporting: [${progressBar}] ${formattedPercent}%`);
         }
+    }
+
+    /**
+     * Renders or updates ZIP extraction progress on stdout.
+     * 
+     * @param {number} currentEntry - Current entry number extracted.
+     * @param {number} totalEntries - Total number of entries in ZIP.
+     */
+    updateZip(currentEntry, totalEntries) {
+        const progressFraction = totalEntries > 0 ? currentEntry / totalEntries : 1;
+        const formattedPercent = (progressFraction * 100).toFixed(1);
+
+        if (formattedPercent !== this.lastRenderedPercent) {
+            this.lastRenderedPercent = formattedPercent;
+            const filledWidth = Math.round(progressFraction * this.barWidth);
+            const progressBar = "█".repeat(filledWidth) + "-".repeat(this.barWidth - filledWidth);
+
+            process.stdout.write(`\rUnzipping: [${progressBar}] ${formattedPercent}% (${currentEntry}/${totalEntries})`);
+        }
+    }
+
+    /**
+     * Prints completion message for ZIP extraction.
+     */
+    completeZip() {
+        process.stdout.write("\n✅ ZIP extraction complete.\n");
+        this.lastRenderedPercent = "";
     }
 
     /**
