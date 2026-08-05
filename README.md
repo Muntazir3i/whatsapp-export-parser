@@ -113,6 +113,54 @@ The parsed output will be saved into `chats.db` in the project root.
 
 ---
 
+## 🤝 Contributing
+
+Thanks for taking the time to contribute!
+
+### Getting Started
+
+Clone the repository:
+
+```bash
+git clone https://github.com/Muntazir3i/whatsapp-export-parser
+cd whatsapp-export-parser
+npm install
+```
+
+### Branches
+
+Please do not commit directly to `main`. Create a feature branch instead:
+
+```bash
+git switch -c feature/your-feature
+```
+
+**Branch Naming Examples:**
+```
+feature/zip-parser
+feature/media-support
+fix/date-parser
+docs/readme
+```
+
+### Pull Requests
+
+When finished, push your branch and open a Pull Request targeting `main`:
+
+```bash
+git push origin feature/your-feature
+```
+
+### Code Style Guidelines
+
+- Use **ES Modules** (`import` / `export`)
+- Keep functions small and focused
+- Maintain **Separation of Concerns**
+- Add clear comments/JSDoc where necessary
+- Keep commits focused and clean
+
+---
+
 ## 📄 License
 
 This project is licensed under the **ISC License**.
