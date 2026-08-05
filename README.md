@@ -1,4 +1,4 @@
-# WhatsApp Export Parser 🚀
+# WhatsApp Export Parser 
 
 A high-performance Node.js ETL pipeline that parses WhatsApp chat export files (`.zip` archives or `.txt` text files) into a structured **SQLite** database.
 
