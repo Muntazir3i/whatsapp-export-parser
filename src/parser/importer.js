@@ -86,7 +86,10 @@ export async function streamChatMessages(filePath, onMessageParsed, onProgress) 
     const messageBuffer = new MessageStreamBuffer();
 
     for await (const line of lineReader) {
-        if (line.length === 0) continue;
+        if (line.length === 0){
+            bytesRead += Buffer.byteLength(line) + 1;
+            continue;
+        } 
 
         // Byte tracking (+1 byte for newline character)
         bytesRead += Buffer.byteLength(line) + 1;
