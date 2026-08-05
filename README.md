@@ -54,9 +54,10 @@ The parser creates a local `chats.db` SQLite database with the following relatio
 | :--- | :--- | :--- |
 | `id` | `INTEGER PRIMARY KEY AUTOINCREMENT` | Unique message ID |
 | `chat_id` | `INTEGER NOT NULL` | Foreign key referencing `chats(id)` |
-| `sender` | `TEXT NOT NULL` | Sender display name or phone number |
-| `message` | `TEXT NOT NULL` | Full message content (supports multi-line text) |
+| `sender` | `TEXT` | Sender display name or phone number (`NULL` for system events) |
+| `message` | `TEXT` | Full message content (supports multi-line text) |
 | `timestamp` | `TEXT NOT NULL` | Standardized date & time string (`DD/MM/YY HH:MM`) |
+| `type` | `TEXT NOT NULL` | Message category (`text`, `media`, `deleted`, `system`) |
 
 ---
 
