@@ -8,3 +8,14 @@
  * inserting messages, retrieving chat and message data, searching,
  * and deleting records. It contains no application, business, or UI logic.
  */
+
+
+export class chatRepository{
+    constructor(db){
+        this.db = db;
+    }
+    
+    findAllChats(){
+        return this.db.prepare(`SELECT * FROM chats`).all()
+    }
+}
