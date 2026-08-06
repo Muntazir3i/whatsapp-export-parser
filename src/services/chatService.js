@@ -8,3 +8,15 @@
  * searching messages, and deleting chats. It contains business logic but
  * does not interact directly with the user interface or execute raw SQL.
  */
+
+import { createDatabaseConnection } from "../db/database.js";
+import { chatRepository } from "../db/chatRepository.js";
+import { createSchema } from "../db/schema.js";
+
+const db = createDatabaseConnection()
+
+createSchema(db);
+
+const chatRepo = new chatRepository(db)
+
+console.log(chatRepo.findAllChats());
