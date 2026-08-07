@@ -36,7 +36,24 @@ export class chatRepository {
     }
 
     findChatById(id) {
-        return this.db.prepare('SELECT id, name FROM chats WHERE id = ?').get(id);
+        const query = `
+        SELECT 
+            c.id, 
+            c.name, 
+            m.message AS lastMessage, 
+            m.timestamp 
+        FROM chats c
+        LEFT JOIN messages m 
+            ON m.id = (
+                SELECT id 
+                FROM messages 
+                WHERE chat_id = c.id 
+                ORDER BY id DESC 
+                LIMIT 1
+            )
+        WHERE c.id = ?
+    `;
+        return this.db.prepare(query).get(id);
     }
 
 }
