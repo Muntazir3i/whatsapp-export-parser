@@ -19,6 +19,7 @@ export class chatServices{
         return this.chatRepository.findAllChats()
     }
 
-
-
+    getChat(chatId){
+        return this.chatRepository.findChatById(chatId)
+    }
 }

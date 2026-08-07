@@ -10,12 +10,16 @@
  */
 
 
-export class chatRepository{
-    constructor(db){
+export class chatRepository {
+    constructor(db) {
         this.db = db;
     }
-    
-    findAllChats(){
+
+    findAllChats() {
         return this.db.prepare(`SELECT * FROM chats`).all()
+    }
+
+    findChatById(chatId) {
+        return this.db.prepare('SELECT id, name FROM chats WHERE id = ?').get(chatId);
     }
 }

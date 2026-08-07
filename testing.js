@@ -12,4 +12,5 @@ const cp = new chatRepository(db)
 const cs = new chatServices(cp)
 
 
-console.log(cs.getChats());
+// console.log(cs.getChats());
+console.log(cs.getChat(1));
