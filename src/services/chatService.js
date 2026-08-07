@@ -9,14 +9,16 @@
  * does not interact directly with the user interface or execute raw SQL.
  */
 
-import { createDatabaseConnection } from "../db/database.js";
-import { chatRepository } from "../db/chatRepository.js";
-import { createSchema } from "../db/schema.js";
+export class chatServices{
 
-const db = createDatabaseConnection()
+    constructor(chatRepository){
+        this.chatRepository = chatRepository;
+    }
 
-createSchema(db);
+    getChats(){
+        return this.chatRepository.findAllChats()
+    }
 
-const chatRepo = new chatRepository(db)
 
-console.log(chatRepo.findAllChats());
+
+}
