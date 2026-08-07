@@ -22,4 +22,5 @@ export class chatServices{
     getChat(chatId){
         return this.chatRepository.findChatById(chatId)
     }
+
 }
