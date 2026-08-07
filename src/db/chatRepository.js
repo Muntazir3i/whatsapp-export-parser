@@ -16,10 +16,44 @@ export class chatRepository {
     }
 
     findAllChats() {
-        return this.db.prepare(`SELECT * FROM chats`).all()
+        const query = `
+            SELECT 
+                c.id, 
+                c.name, 
+                m.message AS lastMessage, 
+                m.timestamp 
+            FROM chats c
+            LEFT JOIN messages m 
+                ON m.id = (
+                    SELECT id 
+                    FROM messages 
+                    WHERE chat_id = c.id 
+                    ORDER BY id DESC 
+                    LIMIT 1
+                )
+        `;
+        return this.db.prepare(query).all();
     }
 
-    findChatById(chatId) {
-        return this.db.prepare('SELECT id, name FROM chats WHERE id = ?').get(chatId);
+    findChatById(id) {
+        const query = `
+        SELECT 
+            c.id, 
+            c.name, 
+            m.message AS lastMessage, 
+            m.timestamp 
+        FROM chats c
+        LEFT JOIN messages m 
+            ON m.id = (
+                SELECT id 
+                FROM messages 
+                WHERE chat_id = c.id 
+                ORDER BY id DESC 
+                LIMIT 1
+            )
+        WHERE c.id = ?
+    `;
+        return this.db.prepare(query).get(id);
     }
+
 }
