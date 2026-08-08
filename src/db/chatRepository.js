@@ -56,4 +56,15 @@ export class chatRepository {
         return this.db.prepare(query).get(id);
     }
 
+    findMessagesByChatId(chat_id) {
+        const query = `
+        SELECT * FROM (
+            SELECT * FROM messages 
+            WHERE chat_id = ? 
+            ORDER BY id DESC 
+            LIMIT 10
+        )`;
+        return this.db.prepare(query).all(chat_id);
+    }
+
 }
