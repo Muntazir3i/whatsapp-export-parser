@@ -27,4 +27,8 @@ export class chatServices{
         return this.chatRepository.findMessagesByChatId(chat_id)
     }
 
+    deleteChat(chat_id){
+        return this.chatRepository.deleteMessageById(chat_id)
+    }
+
 }
