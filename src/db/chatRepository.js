@@ -56,4 +56,21 @@ export class chatRepository {
         return this.db.prepare(query).get(id);
     }
 
+    findMessagesByChatId(chat_id) {
+        const query = `
+        SELECT * FROM (
+            SELECT * FROM messages 
+            WHERE chat_id = ? 
+            ORDER BY id DESC 
+            LIMIT 10
+        )`;
+        return this.db.prepare(query).all(chat_id);
+    }
+
+    deleteMessageById(chat_id) {
+    const messages = this.db.prepare('DELETE FROM messages WHERE chat_id = ?').run(chat_id);
+    const chat = this.db.prepare('DELETE FROM chats WHERE id = ?').run(chat_id)
+    return {messages: messages.changes, chat: chat.changes}
+}
+
 }
