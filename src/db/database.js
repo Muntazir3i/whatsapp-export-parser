@@ -39,6 +39,9 @@ export function createDatabaseConnection(dbName = "chats.db") {
     const dbPath = path.join(__dirname, "../../", dbName);
 
     const db = new Database(dbPath);
+    
+    // Enable SQLite foreign key enforcement
+    db.pragma("foreign_keys = ON");
 
     console.log("Database connected successfully.");
 

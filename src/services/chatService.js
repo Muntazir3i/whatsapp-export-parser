@@ -59,7 +59,6 @@ export class chatServices {
      * @returns {{ messages: number, chat: number }} Object detailing the count of deleted message and chat records.
      */
     deleteChat(chat_id) {
-        return this.chatRepository.deleteMessageById(chat_id);
+        return this.chatRepository.deleteChat(chat_id);
     }
-
 }

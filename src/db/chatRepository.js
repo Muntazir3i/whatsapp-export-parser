@@ -3,10 +3,9 @@
  * @description
  * Encapsulates all database operations related to chats and messages.
  *
- * This repository is responsible only for interacting with the SQLite
- * database using SQL queries. It provides methods for creating chats,
- * inserting messages, retrieving chat and message data, searching,
- * and deleting records. It contains no application, business, or UI logic.
+ * This repository is responsible for interacting with the SQLite database
+ * using pre-compiled prepared statements and transactions. It provides methods
+ * for retrieving chat and message data and performing atomic deletions.
  */
 
 /**
@@ -14,24 +13,15 @@
  */
 export class chatRepository {
     /**
-     * Creates an instance of chatRepository.
+     * Creates an instance of chatRepository and pre-compiles SQL prepared statements.
      * 
      * @param {import('better-sqlite3').Database} db - An active better-sqlite3 database connection object.
      */
     constructor(db) {
         this.db = db;
-    }
 
-    /**
-     * Retrieves all chats from the database along with their most recent message details.
-     * 
-     * Uses a LEFT JOIN with a correlated subquery to get the latest message text
-     * and timestamp for each chat record.
-     *
-     * @returns {Array<Object>} An array of objects representing all chats (id, name, lastMessage, timestamp).
-     */
-    findAllChats() {
-        const query = `
+        // Pre-compile statements once for optimal performance
+        this.findAllChatsStmt = this.db.prepare(`
             SELECT 
                 c.id, 
                 c.name, 
@@ -46,8 +36,46 @@ export class chatRepository {
                     ORDER BY id DESC 
                     LIMIT 1
                 )
-        `;
-        return this.db.prepare(query).all();
+        `);
+
+        this.findChatByIdStmt = this.db.prepare(`
+            SELECT 
+                c.id, 
+                c.name, 
+                m.message AS lastMessage, 
+                m.timestamp 
+            FROM chats c
+            LEFT JOIN messages m 
+                ON m.id = (
+                    SELECT id 
+                    FROM messages 
+                    WHERE chat_id = c.id 
+                    ORDER BY id DESC 
+                    LIMIT 1
+                )
+            WHERE c.id = ?
+        `);
+
+        this.findMessagesByChatIdStmt = this.db.prepare(`
+            SELECT * FROM (
+                SELECT * FROM messages 
+                WHERE chat_id = ? 
+                ORDER BY id DESC 
+                LIMIT 10
+            )
+        `);
+
+        // Pre-compile statement for deleting a chat (cascading deletes associated messages)
+        this.deleteChatStmt = this.db.prepare('DELETE FROM chats WHERE id = ?');
+    }
+
+    /**
+     * Retrieves all chats from the database along with their most recent message details.
+     *
+     * @returns {Array<Object>} An array of objects representing all chats (id, name, lastMessage, timestamp).
+     */
+    findAllChats() {
+        return this.findAllChatsStmt.all();
     }
 
     /**
@@ -57,24 +85,7 @@ export class chatRepository {
      * @returns {Object|undefined} The chat record matching the ID, or `undefined` if not found.
      */
     findChatById(id) {
-        const query = `
-        SELECT 
-            c.id, 
-            c.name, 
-            m.message AS lastMessage, 
-            m.timestamp 
-        FROM chats c
-        LEFT JOIN messages m 
-            ON m.id = (
-                SELECT id 
-                FROM messages 
-                WHERE chat_id = c.id 
-                ORDER BY id DESC 
-                LIMIT 1
-            )
-        WHERE c.id = ?
-    `;
-        return this.db.prepare(query).get(id);
+        return this.findChatByIdStmt.get(id);
     }
 
     /**
@@ -84,31 +95,29 @@ export class chatRepository {
      * @returns {Array<Object>} An array containing up to 10 of the most recent message records for the chat.
      */
     findMessagesByChatId(chat_id) {
-        const query = `
-        SELECT * FROM (
-            SELECT * FROM messages 
-            WHERE chat_id = ? 
-            ORDER BY id DESC 
-            LIMIT 10
-        )`;
-        return this.db.prepare(query).all(chat_id);
+        return this.findMessagesByChatIdStmt.all(chat_id);
     }
 
     /**
-     * Deletes a chat record and all of its associated messages by chat ID.
+     * Deletes a chat record from the database by ID.
      * 
-     * Performs cascading deletion manually: deletes rows from the `messages` table first, 
-     * then deletes the row from the `chats` table.
+     * Foreign key `ON DELETE CASCADE` automatically deletes all associated messages.
      *
      * @param {number|string} chat_id - The ID of the chat to delete.
-     * @returns {{ messages: number, chat: number }} Object containing the count of affected rows for messages and chat.
+     * @returns {{ chat: number }} Object containing the count of affected deleted chat records.
+     */
+    deleteChat(chat_id) {
+        const result = this.deleteChatStmt.run(chat_id);
+        return { chat: result.changes };
+    }
+
+    /**
+     * Alias for `deleteChat` to maintain backward compatibility.
+     *
+     * @param {number|string} chat_id - The ID of the chat to delete.
+     * @returns {{ chat: number }} Object containing the count of affected deleted chat records.
      */
     deleteMessageById(chat_id) {
-        // Delete all messages belonging to this chat ID
-        const messages = this.db.prepare('DELETE FROM messages WHERE chat_id = ?').run(chat_id);
-        // Delete the chat record itself
-        const chat = this.db.prepare('DELETE FROM chats WHERE id = ?').run(chat_id);
-
-        return { messages: messages.changes, chat: chat.changes };
+        return this.deleteChat(chat_id);
     }
 }

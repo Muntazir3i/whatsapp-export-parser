@@ -27,8 +27,9 @@ export function createSchema(db) {
             message TEXT,
             timestamp TEXT NOT NULL,
             type TEXT NOT NULL,
-            FOREIGN KEY (chat_id) REFERENCES chats (id)
+            FOREIGN KEY (chat_id) REFERENCES chats (id) ON DELETE CASCADE
         );
+
         `
     );
 
