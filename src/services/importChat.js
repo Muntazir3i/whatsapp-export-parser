@@ -12,17 +12,22 @@ import { readdir } from "fs/promises";
 import { extractChatFileInfo } from "../parser/importer.js";
 
 /**
- * Prompts the user for a WhatsApp export file path (.zip or .txt) via CLI input and validates it.
+ * Resolves and validates a WhatsApp export file path (.zip or .txt), prompting via CLI input if not provided.
  *
+ * @param {string} [inputPath] - Optional file path string.
  * @returns {Promise<{ filePath: string, importDir: string, isZip: boolean }>} File location descriptor object.
  */
-export async function grabFileLocation() {
-    const rl = readline.createInterface({ input, output });
+export async function grabFileLocation(inputPath) {
+    let targetPath = inputPath;
 
-    const rawPath = await rl.question("Enter WhatsApp export file path (.zip or .txt): ");
-    rl.close();
+    if (!targetPath) {
+        const rl = readline.createInterface({ input, output });
+        const rawPath = await rl.question("Enter WhatsApp export file path (.zip or .txt): ");
+        rl.close();
+        targetPath = rawPath;
+    }
 
-    const targetPath = rawPath.trim().replace(/^['"]|['"]$/g, ""); // strip accidental quotes
+    targetPath = targetPath.trim().replace(/^['"]|['"]$/g, ""); // strip accidental quotes
 
     if (!targetPath) {
         throw new Error("No file path provided.");

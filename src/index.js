@@ -1,75 +1,31 @@
 /**
  * @file index.js
  * @description Composition Root for the WhatsApp Export Parser application.
- * Instantiates components and orchestrates the ETL pipeline (Extract, Transform, Load).
+ * Connects database, schema, repository, and services, then launches the interactive CLI app.
  */
 
 import { createDatabaseConnection } from "./db/database.js";
 import { createSchema, ChatRepository } from "./db/schema.js";
-import { extractChatMetadata, streamChatMessages, ConsoleProgressReporter } from "./parser/importer.js";
-import { grabFileLocation, extractZip, findChatFile } from "./services/importChat.js";
-
-const BATCH_SIZE = 1000;
+import { chatRepository } from "./db/chatRepository.js";
+import { chatServices } from "./services/chatService.js";
+import { CLIApp } from "./cli/cliApp.js";
 
 async function main() {
-    // 1. Initialize Console UI Progress Reporter
-    const progressReporter = new ConsoleProgressReporter();
-
-    // 2. Resolve Export File Location (ZIP or TXT)
-    const { filePath, importDir, isZip } = await grabFileLocation();
-    let chatFilePath = filePath;
-
-    if (isZip) {
-        progressReporter.updateZip(0, 1);
-        await extractZip(filePath, importDir, (current, total) => {
-            progressReporter.updateZip(current, total);
-        });
-        progressReporter.completeZip();
-        chatFilePath = await findChatFile(importDir);
-    }
-
-    // 3. Initialize SQLite Database Connection & Schema
+    // 1. Initialize Database Connection & Schema
     const db = createDatabaseConnection("chats.db");
     createSchema(db);
 
-    // 4. Initialize Data Repository
+    // 2. Instantiate Repositories & Services
     const repository = new ChatRepository(db);
+    const readRepository = new chatRepository(db);
+    const chatService = new chatServices(readRepository);
 
-    // 5. Register Chat Session Metadata
-    const chatMetadata = extractChatMetadata(chatFilePath);
-    const chatRecord = repository.createChat(chatMetadata);
-    const chatId = chatRecord.id;
-
-    // 6. Stream and Batch Message Insertions
-    let messageBuffer = [];
-
-    await streamChatMessages(
-        chatFilePath,
-        async (parsedMessage) => {
-            messageBuffer.push({
-                chat_id: chatId,
-                ...parsedMessage
-            });
-
-            if (messageBuffer.length >= BATCH_SIZE) {
-                repository.insertBatch(messageBuffer);
-                messageBuffer = [];
-            }
-        },
-        (bytesRead, totalBytes) => {
-            progressReporter.update(bytesRead, totalBytes);
-        }
-    );
-
-    // 7. Flush Remaining Buffer Tail & Complete
-    if (messageBuffer.length > 0) {
-        repository.insertBatch(messageBuffer);
-    }
-
-    progressReporter.complete();
+    // 3. Launch Interactive CLI Application
+    const cliApp = new CLIApp(chatService, repository);
+    await cliApp.start();
 }
 
 main().catch((err) => {
-    console.error("\n❌ Pipeline execution failed:", err.message || err);
+    console.error("\n❌ Application execution failed:", err.message || err);
     process.exit(1);
 });

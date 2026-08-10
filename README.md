@@ -85,23 +85,28 @@ The parser creates a local `chats.db` SQLite database with the following relatio
 
 ## 💻 Usage
 
-Run the main application script:
+Run the main application CLI:
 
 ```bash
 npm start
 ```
 
-When prompted, enter the absolute or relative path to your WhatsApp export file:
+Interactive menu options:
 
 ```text
-Enter WhatsApp export file path (.zip or .txt): ./WhatsApp Chat with Mom.zip
-Unzipping: [██████████████████████████████] 100.0% (5/5)
-✅ ZIP extraction complete.
-Importing: [██████████████████████████████] 100.0%
-Import complete.
-```
+==========================================
+ 📱 WhatsApp Export Parser & Chat Manager 
+==========================================
 
-The parsed output will be saved into `chats.db` in the project root.
+Menu Options:
+ [1] 📥 Import New Chat (.zip or .txt)
+ [2] 📋 View All Chats
+ [3] 💬 View Messages for a Chat (by ID)
+ [4] 🗑️  Delete a Chat (by ID)
+ [5] 🚪 Exit
+------------------------------------------
+Select an option (1-5): 
+```
 
 ---
 
