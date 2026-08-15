@@ -43,13 +43,14 @@ export class chatServices {
     }
 
     /**
-     * Retrieves the latest messages for a given chat ID.
+     * Retrieves messages for a given chat ID with cursor-based pagination support.
      *
      * @param {number|string} chat_id - The unique identifier of the chat.
-     * @returns {Array<Object>} List of recent message objects for the specified chat.
+     * @param {Object|number} [options] - Pagination options ({ limit, beforeId, afterId }) or limit.
+     * @returns {{ messages: Array<Object>, hasMore: boolean }} Object with message records and pagination state.
      */
-    getMessages(chat_id) {
-        return this.chatRepository.findMessagesByChatId(chat_id);
+    getMessages(chat_id, options) {
+        return this.chatRepository.findMessagesByChatId(chat_id, options);
     }
 
     /**

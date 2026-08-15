@@ -56,13 +56,27 @@ export class chatRepository {
             WHERE c.id = ?
         `);
 
-        this.findMessagesByChatIdStmt = this.db.prepare(`
+        this.findInitialMessagesStmt = this.db.prepare(`
+            SELECT * FROM messages 
+            WHERE chat_id = ? 
+            ORDER BY id DESC 
+            LIMIT ?
+        `);
+
+        this.findOlderMessagesStmt = this.db.prepare(`
+            SELECT * FROM messages 
+            WHERE chat_id = ? AND id < ? 
+            ORDER BY id DESC 
+            LIMIT ?
+        `);
+
+        this.findNewerMessagesStmt = this.db.prepare(`
             SELECT * FROM (
                 SELECT * FROM messages 
-                WHERE chat_id = ? 
-                ORDER BY id DESC 
-                LIMIT 10
-            )
+                WHERE chat_id = ? AND id > ? 
+                ORDER BY id ASC 
+                LIMIT ?
+            ) ORDER BY id DESC
         `);
 
         // Pre-compile statement for deleting a chat (cascading deletes associated messages)
@@ -89,13 +103,49 @@ export class chatRepository {
     }
 
     /**
-     * Retrieves the latest 10 messages for a specified chat ID.
+     * Retrieves messages for a specified chat ID using cursor-based (keyset) pagination.
      *
-     * @param {number|string} chat_id - The ID of the chat whose messages are being requested.
-     * @returns {Array<Object>} An array containing up to 10 of the most recent message records for the chat.
+     * @param {number|string} chat_id - The ID of the chat whose messages are requested.
+     * @param {Object|number} [options] - Pagination options or numeric limit for backward compatibility.
+     * @param {number} [options.limit=10] - Number of records to fetch.
+     * @param {number} [options.beforeId] - Fetch messages before this message ID (older messages).
+     * @param {number} [options.afterId] - Fetch messages after this message ID (newer messages).
+     * @returns {{ messages: Array<Object>, hasMore: boolean }} Paginated messages array and paging metadata.
      */
-    findMessagesByChatId(chat_id) {
-        return this.findMessagesByChatIdStmt.all(chat_id);
+    findMessagesByChatId(chat_id, options = {}) {
+        let limit = 10;
+        let beforeId = null;
+        let afterId = null;
+
+        if (typeof options === "number") {
+            limit = options;
+        } else if (options && typeof options === "object") {
+            if (options.limit !== undefined) limit = options.limit;
+            if (options.beforeId !== undefined) beforeId = options.beforeId;
+            if (options.afterId !== undefined) afterId = options.afterId;
+        }
+
+        // Fetch limit + 1 to efficiently check if additional pages exist without COUNT(*)
+        const fetchLimit = limit + 1;
+        let rows = [];
+
+        if (beforeId !== null) {
+            rows = this.findOlderMessagesStmt.all(chat_id, beforeId, fetchLimit);
+        } else if (afterId !== null) {
+            rows = this.findNewerMessagesStmt.all(chat_id, afterId, fetchLimit);
+        } else {
+            rows = this.findInitialMessagesStmt.all(chat_id, fetchLimit);
+        }
+
+        const hasMore = rows.length > limit;
+        if (hasMore) {
+            rows.pop();
+        }
+
+        return {
+            messages: rows,
+            hasMore
+        };
     }
 
     /**

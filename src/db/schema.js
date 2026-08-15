@@ -30,6 +30,8 @@ export function createSchema(db) {
             FOREIGN KEY (chat_id) REFERENCES chats (id) ON DELETE CASCADE
         );
 
+        CREATE INDEX IF NOT EXISTS idx_messages_chat_id_id ON messages (chat_id, id DESC);
+
         `
     );
 

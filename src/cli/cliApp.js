@@ -155,7 +155,7 @@ export class CLIApp {
     }
 
     /**
-     * Handles Menu Option 3: Viewing messages for a specific chat ID
+     * Handles Menu Option 3: Viewing messages for a specific chat ID with cursor-based pagination
      */
     async handleViewMessages(rl) {
         console.log("\n--- 💬 View Chat Messages ---");
@@ -173,23 +173,49 @@ export class CLIApp {
             return;
         }
 
-        const messages = this.chatService.getMessages(chatId);
-        console.log(`\n💬 Recent Messages for "${chat.name}" (ID: ${chatId}):`);
-        console.log("--------------------------------------------------------------------------------");
+        let queryOptions = { limit: 10 };
+        let paging = true;
 
-        if (!messages || messages.length === 0) {
-            console.log("No messages found for this chat.");
-        } else {
-            // Reversing messages array to show them in chronological order
-            const chronological = [...messages].reverse();
-            for (const msg of chronological) {
-                const senderName = msg.sender ? msg.sender : "System";
-                console.log(`[${msg.timestamp}] ${senderName}: ${msg.message}`);
+        while (paging) {
+            const { messages, hasMore } = this.chatService.getMessages(chatId, queryOptions);
+            console.log(`\n💬 Messages for "${chat.name}" (ID: ${chatId}):`);
+            console.log("--------------------------------------------------------------------------------");
+
+            if (!messages || messages.length === 0) {
+                console.log("No messages found for this view.");
+            } else {
+                // Reversing messages array to show them in chronological order
+                const chronological = [...messages].reverse();
+                for (const msg of chronological) {
+                    const senderName = msg.sender ? msg.sender : "System";
+                    console.log(`[${msg.timestamp}] ${senderName}: ${msg.message}`);
+                }
+            }
+            console.log("--------------------------------------------------------------------------------");
+
+            const minId = messages && messages.length > 0 ? messages[messages.length - 1].id : null;
+            const maxId = messages && messages.length > 0 ? messages[0].id : null;
+
+            const canGoNext = minId !== null && (hasMore || queryOptions.afterId !== undefined);
+            const canGoPrev = maxId !== null && (queryOptions.beforeId !== undefined || queryOptions.afterId !== undefined);
+
+            console.log("\nNavigation Options:");
+            if (canGoNext) console.log(" [n] Next Page (Older messages)");
+            if (canGoPrev) console.log(" [p] Previous Page (Newer messages)");
+            console.log(" [e] Exit to main menu");
+
+            const navChoice = (await rl.question("\nSelect option: ")).trim().toLowerCase();
+
+            if (navChoice === "n" && canGoNext) {
+                queryOptions = { limit: 10, beforeId: minId };
+            } else if (navChoice === "p" && canGoPrev) {
+                queryOptions = { limit: 10, afterId: maxId };
+            } else if (navChoice === "e" || navChoice === "") {
+                paging = false;
+            } else {
+                console.log("❌ Invalid option.");
             }
         }
-        console.log("--------------------------------------------------------------------------------");
-
-        await rl.question("\nPress Enter to return to main menu...");
     }
 
     /**
