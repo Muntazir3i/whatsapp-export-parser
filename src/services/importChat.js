@@ -81,8 +81,9 @@ export async function extractZip(zipFilePath, outputDir, onProgress) {
  * @returns {Promise<string>} Path to the located chat text file.
  */
 export async function findChatFile(importDir) {
-    const items = await readdir(importDir);
-    const textFile = items.find(item => item.endsWith(".txt"));
+    const items = await readdir(importDir, { recursive: true });
+    // Prioritize _chat.txt or any .txt export file
+    const textFile = items.find(item => item.endsWith("_chat.txt") || item.endsWith(".txt"));
 
     if (!textFile) {
         throw new Error(`No WhatsApp chat text (.txt) file found in "${importDir}".`);

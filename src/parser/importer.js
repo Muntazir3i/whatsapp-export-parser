@@ -17,10 +17,18 @@ import path from "path";
 export function extractChatFileInfo(filePath) {
     const fileName = path.basename(filePath);
     const ext = path.extname(fileName);
-    const baseNameWithoutExt = path.basename(fileName, ext);
+    let baseNameWithoutExt = path.basename(fileName, ext);
 
-    const withMatch = baseNameWithoutExt.match(/with\s+(.+)$/i);
-    const contactName = withMatch ? withMatch[1].trim() : baseNameWithoutExt.trim();
+    // If file is "_chat.txt" (iOS default), extract contact name from parent folder
+    if (baseNameWithoutExt.toLowerCase() === "_chat") {
+        const parentDir = path.basename(path.dirname(filePath));
+        if (parentDir && parentDir !== "." && parentDir !== "imports") {
+            baseNameWithoutExt = parentDir;
+        }
+    }
+
+    const match = baseNameWithoutExt.match(/(?:WhatsApp\s+Chat(?:\s+with|\s+-)?|\bChat\s+with)\s+(.+)$/i);
+    const contactName = match ? match[1].trim() : baseNameWithoutExt.trim();
 
     return [fileName, contactName];
 }
