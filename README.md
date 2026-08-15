@@ -1,15 +1,17 @@
-# WhatsApp Export Parser 
+# WhatsApp Export Parser & Chat Manager 📱
 
-A high-performance Node.js ETL pipeline that parses WhatsApp chat export files (`.zip` archives or `.txt` text files) into a structured **SQLite** database.
+A high-performance Node.js ETL pipeline and interactive CLI manager that parses WhatsApp chat export files (`.zip` archives or `.txt` text files) into a structured **SQLite** database.
 
-Designed with clean OOP architecture, streaming line readers, and batched database transactions for maximum ingestion throughput and low memory overhead.
+Designed with clean OOP architecture, streaming line readers, batched database transactions, and **cursor-based (keyset) pagination** for sub-millisecond query performance.
 
 ---
 
 ## ✨ Features
 
-- 📦 **Dual File Support**: Directly process exported `.zip` archives or raw `.txt` chat files.
+- 📦 **Dual File & ZIP Extraction Support**: Directly process exported `.zip` archives or raw `.txt` chat files.
 - ⚡ **High Throughput Ingestion**: Batched SQLite transactions (`better-sqlite3`) processing 1,000+ messages per transaction.
+- 🚀 **Cursor-Based (Keyset) Pagination**: High-performance $O(\log N)$ message browsing using indexed seek queries (`id < cursor` / `id > cursor`), completely eliminating `OFFSET` performance bottlenecks.
+- 🌐 **Robust Multi-Format & Regional Parser**: Fully parses Android & iOS (iPhone) exports, 12-hour AM/PM and 24-hour clocks, international date delimiters (`/`, `.`, `-`), and invisible Unicode control character sanitization (`\u200e`, `\u202f`, `\ufeff`).
 - 🔄 **Multi-Line Message Accumulation**: Stateful line parser that seamlessly handles multi-line messages, emojis, formatted lists, and colons within chat bodies.
 - 📊 **Real-Time CLI Progress Indicators**: Live ASCII progress bars for both ZIP extraction and message ingestion.
 - 🏗️ **Clean Modular Architecture**: Decoupled components following Single Responsibility Principle (SRP) and Separation of Concerns (SoC).
@@ -21,14 +23,18 @@ Designed with clean OOP architecture, streaming line readers, and batched databa
 ```
 whatsapp-export-parser/
 ├── src/
+│   ├── cli/
+│   │   └── cliApp.js        # Interactive CLI menu & paginated conversation browser
 │   ├── db/
+│   │   ├── chatRepository.js# Keyset paginated query repository
 │   │   ├── database.js      # SQLite connection factory
-│   │   └── schema.js        # DDL schema definition & ChatRepository
+│   │   └── schema.js        # DDL schema definition, indexes & ChatRepository
 │   ├── parser/
 │   │   ├── reader.js        # Line-by-line file streaming & byte metrics
-│   │   ├── messageParser.js # Multi-line message accumulation & date parsing
+│   │   ├── messageParser.js # Robust multi-format parsing & Unicode sanitization
 │   │   └── importer.js      # Stream orchestrator & ConsoleProgressReporter
 │   ├── services/
+│   │   ├── chatService.js   # Application business logic layer
 │   │   └── importChat.js    # Interactive file prompt & ZIP extraction service
 │   └── index.js             # Application Composition Root
 ├── package.json
@@ -37,27 +43,30 @@ whatsapp-export-parser/
 
 ---
 
-## 🗄️ Database Schema
+## 🗄️ Database Schema & Indexes
 
-The parser creates a local `chats.db` SQLite database with the following relational schema:
+The parser creates a local `chats.db` SQLite database with the following relational schema and composite B-Tree indexes:
 
 ### `chats` Table
 | Column | Type | Description |
 | :--- | :--- | :--- |
 | `id` | `INTEGER PRIMARY KEY AUTOINCREMENT` | Unique chat session ID |
-| `name` | `TEXT NOT NULL` | Contact / Group name parsed from filename |
-| `file_name` | `TEXT NOT NULL` | Relative file name of the export |
-| `created_at` | `DATETIME DEFAULT CURRENT_TIMESTAMP` | Ingestion timestamp |
+| `name` | `TEXT NOT NULL` | Contact / Group name parsed from filename or folder |
+| `file_name` | `TEXT` | Relative file name of the export |
+| `imported_at` | `DATETIME DEFAULT CURRENT_TIMESTAMP` | Ingestion timestamp |
 
 ### `messages` Table
 | Column | Type | Description |
 | :--- | :--- | :--- |
 | `id` | `INTEGER PRIMARY KEY AUTOINCREMENT` | Unique message ID |
-| `chat_id` | `INTEGER NOT NULL` | Foreign key referencing `chats(id)` |
+| `chat_id` | `INTEGER NOT NULL` | Foreign key referencing `chats(id)` (`ON DELETE CASCADE`) |
 | `sender` | `TEXT` | Sender display name or phone number (`NULL` for system events) |
 | `message` | `TEXT` | Full message content (supports multi-line text) |
-| `timestamp` | `TEXT NOT NULL` | Standardized date & time string (`DD/MM/YY HH:MM`) |
+| `timestamp` | `TEXT NOT NULL` | Date & time string (`DD/MM/YY HH:MM` or `M/D/YY H:MM AM/PM`) |
 | `type` | `TEXT NOT NULL` | Message category (`text`, `media`, `deleted`, `system`) |
+
+### ⚡ Indexes
+- `idx_messages_chat_id_id ON messages (chat_id, id DESC)`: Enables $O(\log N)$ cursor-based seek pagination.
 
 ---
 
@@ -85,7 +94,7 @@ The parser creates a local `chats.db` SQLite database with the following relatio
 
 ## 💻 Usage
 
-Run the main application CLI:
+Run the interactive application CLI:
 
 ```bash
 npm start
@@ -108,6 +117,13 @@ Menu Options:
 Select an option (1-5): 
 ```
 
+### 💬 Interactive Keyset Message Viewer
+
+When viewing messages (Option 3), navigate chat history using cursor controls:
+- `[n]` **Next Page**: Load older messages ($O(\log N)$ B-Tree index seek).
+- `[p]` **Previous Page**: Load newer messages.
+- `[e]` **Exit**: Return to main menu.
+
 ---
 
 ## 🛠️ Built With
@@ -120,49 +136,11 @@ Select an option (1-5):
 
 ## 🤝 Contributing
 
-Thanks for taking the time to contribute!
-
-### Getting Started
-
-Clone the repository:
-
-```bash
-git clone https://github.com/Muntazir3i/whatsapp-export-parser
-cd whatsapp-export-parser
-npm install
-```
-
-### Branches
-
-Please do not commit directly to `main`. Create a feature branch instead:
-
-```bash
-git switch -c feature/your-feature
-```
-
-**Branch Naming Examples:**
-```
-feature/zip-parser
-feature/media-support
-fix/date-parser
-docs/readme
-```
-
-### Pull Requests
-
-When finished, push your branch and open a Pull Request targeting `main`:
-
-```bash
-git push origin feature/your-feature
-```
-
-### Code Style Guidelines
-
-- Use **ES Modules** (`import` / `export`)
-- Keep functions small and focused
-- Maintain **Separation of Concerns**
-- Add clear comments/JSDoc where necessary
-- Keep commits focused and clean
+1. Create a feature branch:
+   ```bash
+   git switch -c feature/your-feature
+   ```
+2. Commit your changes and open a Pull Request targeting `main`.
 
 ---
 
