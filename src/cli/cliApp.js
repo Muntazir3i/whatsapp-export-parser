@@ -177,7 +177,7 @@ export class CLIApp {
         let paging = true;
 
         while (paging) {
-            const { messages, hasMore } = this.chatService.getMessages(chatId, queryOptions);
+            const { messages, hasOlder, hasNewer } = this.chatService.getMessages(chatId, queryOptions);
             console.log(`\n💬 Messages for "${chat.name}" (ID: ${chatId}):`);
             console.log("--------------------------------------------------------------------------------");
 
@@ -196,8 +196,8 @@ export class CLIApp {
             const minId = messages && messages.length > 0 ? messages[messages.length - 1].id : null;
             const maxId = messages && messages.length > 0 ? messages[0].id : null;
 
-            const canGoNext = minId !== null && (hasMore || queryOptions.afterId !== undefined);
-            const canGoPrev = maxId !== null && (queryOptions.beforeId !== undefined || queryOptions.afterId !== undefined);
+            const canGoNext = minId !== null && hasOlder;
+            const canGoPrev = maxId !== null && hasNewer;
 
             console.log("\nNavigation Options:");
             if (canGoNext) console.log(" [n] Next Page (Older messages)");

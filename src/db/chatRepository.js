@@ -128,23 +128,39 @@ export class chatRepository {
         // Fetch limit + 1 to efficiently check if additional pages exist without COUNT(*)
         const fetchLimit = limit + 1;
         let rows = [];
+        let hasOlder = false;
+        let hasNewer = false;
 
         if (beforeId !== null) {
             rows = this.findOlderMessagesStmt.all(chat_id, beforeId, fetchLimit);
+            hasNewer = true;
+            hasOlder = rows.length > limit;
+            if (hasOlder) rows.pop();
         } else if (afterId !== null) {
             rows = this.findNewerMessagesStmt.all(chat_id, afterId, fetchLimit);
+            hasOlder = true;
+            hasNewer = rows.length > limit;
+            if (hasNewer) rows.pop();
+
+            // Fallback if requesting newer messages when already at the latest page
+            if (rows.length === 0) {
+                rows = this.findInitialMessagesStmt.all(chat_id, fetchLimit);
+                hasNewer = false;
+                hasOlder = rows.length > limit;
+                if (hasOlder) rows.pop();
+            }
         } else {
             rows = this.findInitialMessagesStmt.all(chat_id, fetchLimit);
-        }
-
-        const hasMore = rows.length > limit;
-        if (hasMore) {
-            rows.pop();
+            hasNewer = false;
+            hasOlder = rows.length > limit;
+            if (hasOlder) rows.pop();
         }
 
         return {
             messages: rows,
-            hasMore
+            hasOlder,
+            hasNewer,
+            hasMore: hasOlder // backward compatibility
         };
     }
 
